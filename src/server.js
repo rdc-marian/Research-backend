@@ -12,7 +12,7 @@ const { configureCloudinary } = require("./config/cloudinary");
 const port = Number(process.env.PORT) || 5000;
 
 const start = async () => {
-  try {
+  try 
     console.log("Connecting to MongoDB...");
     await connectDB();
     console.log("MongoDB connected.");
