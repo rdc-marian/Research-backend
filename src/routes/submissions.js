@@ -96,9 +96,10 @@ router.post(
       file: fileData,
     });
 
-    const populated = await item
-      .populate("scholar", "name email")
-      .populate("supervisor", "name email");
+    const populated = await item.populate([
+      { path: "scholar", select: "name email" },
+      { path: "supervisor", select: "name email" },
+    ]);
 
     res.status(201).json({ item: populated });
   })
