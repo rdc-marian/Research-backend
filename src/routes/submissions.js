@@ -1,8 +1,9 @@
 const express = require("express");
 const Submission = require("../models/Submission");
+const User = require("../models/User");
 const { upload } = require("../middleware/upload");
-const { isCloudinaryConfigured } = require("../config/cloudinary");
-const { uploadBuffer } = require("../utils/cloudinaryUpload");
+const { isS3Configured } = require("../config/s3");
+const { uploadBuffer } = require("../utils/s3Upload");
 const { asyncHandler } = require("../utils/asyncHandler");
 
 const router = express.Router();
@@ -13,12 +14,23 @@ const parseDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const buildSubmissionQuery = (params) => {
+const buildSubmissionQuery = async (params) => {
   const query = {};
 
   if (params.status) query.status = params.status;
   if (params.department) query.department = params.department;
-  if (params.scholarId) query.scholar = params.scholarId;
+  if (params.scholarId) {
+    query.scholar = params.scholarId;
+  } else if (params.guideId || params.researchCenterId) {
+    const scholarQuery = {
+      $or: [{ role: "scholar" }, { roles: "scholar" }],
+    };
+    if (params.guideId) scholarQuery.guide = params.guideId;
+    if (params.researchCenterId) scholarQuery.researchCenter = params.researchCenterId;
+
+    const scholars = await User.find(scholarQuery).select("_id");
+    query.scholar = { $in: scholars.map((item) => item._id) };
+  }
   if (params.supervisorId) query.supervisor = params.supervisorId;
 
   if (params.search) {
@@ -41,10 +53,17 @@ const buildSubmissionQuery = (params) => {
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const query = buildSubmissionQuery(req.query);
+    const query = await buildSubmissionQuery(req.query);
 
     const items = await Submission.find(query)
-      .populate("scholar", "name email")
+      .populate({
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+          { path: "researchCenter", select: "name code" },
+          { path: "guide", select: "name email" },
+        ],
+      })
       .populate("supervisor", "name email")
       .sort({ submittedAt: -1 });
 
@@ -68,19 +87,20 @@ router.post(
     let fileData;
 
     if (req.file) {
-      if (!isCloudinaryConfigured()) {
-        res.status(400).json({ message: "Cloudinary is not configured" });
+      if (!isS3Configured()) {
+        res.status(400).json({ message: "AWS S3 is not configured" });
         return;
       }
 
       const result = await uploadBuffer(req.file.buffer, {
         folder: "research-submissions",
-        resource_type: "auto",
+        originalName: req.file.originalname,
+        contentType: req.file.mimetype,
       });
 
       fileData = {
-        url: result.secure_url,
-        publicId: result.public_id,
+        url: result.url,
+        publicId: result.key,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
@@ -97,7 +117,14 @@ router.post(
     });
 
     const populated = await item.populate([
-      { path: "scholar", select: "name email" },
+      {
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+          { path: "researchCenter", select: "name code" },
+          { path: "guide", select: "name email" },
+        ],
+      },
       { path: "supervisor", select: "name email" },
     ]);
 
@@ -109,7 +136,14 @@ router.get(
   "/:id",
   asyncHandler(async (req, res) => {
     const item = await Submission.findById(req.params.id)
-      .populate("scholar", "name email")
+      .populate({
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+          { path: "researchCenter", select: "name code" },
+          { path: "guide", select: "name email" },
+        ],
+      })
       .populate("supervisor", "name email")
       .populate("reviewer", "name email");
 
@@ -119,6 +153,85 @@ router.get(
     }
 
     res.json({ item });
+  })
+);
+
+router.patch(
+  "/:id",
+  upload.single("file"),
+  asyncHandler(async (req, res) => {
+    const { title, abstract, department, scholarId, supervisorId } = req.body;
+    const update = {};
+
+    if (title !== undefined) update.title = title;
+    if (abstract !== undefined) update.abstract = abstract;
+    if (department !== undefined) update.department = department;
+    if (scholarId !== undefined) update.scholar = scholarId;
+    if (supervisorId !== undefined) {
+      update.supervisor = supervisorId || undefined;
+    }
+
+    if (req.file) {
+      if (!isS3Configured()) {
+        res.status(400).json({ message: "AWS S3 is not configured" });
+        return;
+      }
+
+      const result = await uploadBuffer(req.file.buffer, {
+        folder: "research-submissions",
+        originalName: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
+
+      update.file = {
+        url: result.url,
+        publicId: result.key,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+      };
+    }
+
+    if (Object.keys(update).length === 0) {
+      res.status(400).json({ message: "No updates provided" });
+      return;
+    }
+
+    const item = await Submission.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    })
+      .populate({
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+          { path: "researchCenter", select: "name code" },
+          { path: "guide", select: "name email" },
+        ],
+      })
+      .populate("supervisor", "name email")
+      .populate("reviewer", "name email");
+
+    if (!item) {
+      res.status(404).json({ message: "Submission not found" });
+      return;
+    }
+
+    res.json({ item });
+  })
+);
+
+router.delete(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const item = await Submission.findByIdAndDelete(req.params.id);
+
+    if (!item) {
+      res.status(404).json({ message: "Submission not found" });
+      return;
+    }
+
+    res.json({ message: "Submission deleted" });
   })
 );
 
@@ -149,7 +262,14 @@ router.patch(
       new: true,
       runValidators: true,
     })
-      .populate("scholar", "name email")
+      .populate({
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+          { path: "researchCenter", select: "name code" },
+          { path: "guide", select: "name email" },
+        ],
+      })
       .populate("supervisor", "name email")
       .populate("reviewer", "name email");
 

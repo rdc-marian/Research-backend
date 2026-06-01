@@ -7,7 +7,7 @@ process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
 const { app } = require("./app");
 const { connectDB } = require("./config/db");
-const { configureCloudinary } = require("./config/cloudinary");
+const { configureS3 } = require("./config/s3");
 
 const port = Number(process.env.PORT) || 5000;
 
@@ -16,7 +16,7 @@ const start = async () => {
     console.log("Connecting to MongoDB...");
     await connectDB();
     console.log("MongoDB connected.");
-    configureCloudinary();
+    configureS3();
 
     console.log("Starting HTTP server...");
     app.listen(port, () => {

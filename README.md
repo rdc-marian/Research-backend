@@ -32,7 +32,10 @@ SEED_RESET=true npm run seed
 - `NODE_ENV` - `development` or `production`
 - `MONGO_URI` - MongoDB Atlas connection string
 - `FRONTEND_ORIGIN` - Vercel or localhost origin allowed by CORS
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` - Cloudinary upload
+- `AWS_REGION` - AWS region (for example `ap-south-1`)
+- `AWS_S3_BUCKET` - S3 bucket name for file storage
+- `AWS_ACCESS_KEY_ID` - IAM access key with S3 write permissions
+- `AWS_SECRET_ACCESS_KEY` - IAM secret key
 
 ## Render Deployment Prep
 

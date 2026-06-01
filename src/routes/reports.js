@@ -1,5 +1,6 @@
 const express = require("express");
 const Submission = require("../models/Submission");
+const User = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
 
 const router = express.Router();
@@ -10,11 +11,22 @@ const parseDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const buildMatch = (params) => {
+const buildMatch = async (params) => {
   const match = {};
 
   if (params.department) {
     match.department = params.department;
+  }
+
+  if (params.guideId || params.researchCenterId) {
+    const scholarQuery = {
+      $or: [{ role: "scholar" }, { roles: "scholar" }],
+    };
+    if (params.guideId) scholarQuery.guide = params.guideId;
+    if (params.researchCenterId) scholarQuery.researchCenter = params.researchCenterId;
+
+    const scholars = await User.find(scholarQuery).select("_id");
+    match.scholar = { $in: scholars.map((item) => item._id) };
   }
 
   const fromDate = parseDate(params.from);
@@ -32,7 +44,7 @@ const buildMatch = (params) => {
 router.get(
   "/summary",
   asyncHandler(async (req, res) => {
-    const match = buildMatch(req.query);
+    const match = await buildMatch(req.query);
     const total = await Submission.countDocuments(match);
 
     const statusAgg = await Submission.aggregate([
