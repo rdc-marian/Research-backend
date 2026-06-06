@@ -9,6 +9,15 @@ const approvalRoutes = require("./approvals");
 const reportRoutes = require("./reports");
 const settingsRoutes = require("./settings");
 const uploadRoutes = require("./uploads");
+const portfolioSummaryRoutes = require("./portfolioSummary");
+const qualificationRoutes = require("./qualifications");
+const publicationRoutes = require("./publications");
+const conferenceRoutes = require("./conferences");
+const patentRoutes = require("./patents");
+const workshopRoutes = require("./workshops");
+const membershipRoutes = require("./memberships");
+const scholarshipRoutes = require("./scholarships");
+const leaveRoutes = require("./leaves");
 
 const router = express.Router();
 
@@ -22,5 +31,14 @@ router.use("/approvals", approvalRoutes);
 router.use("/reports", reportRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/uploads", uploadRoutes);
+router.use("/portfolio", portfolioSummaryRoutes);
+router.use("/qualifications", qualificationRoutes);
+router.use("/publications", publicationRoutes);
+router.use("/conferences", conferenceRoutes);
+router.use("/patents", patentRoutes);
+router.use("/workshops", workshopRoutes);
+router.use("/memberships", membershipRoutes);
+router.use("/scholarships", scholarshipRoutes);
+router.use("/leaves", leaveRoutes);
 
 module.exports = router;
