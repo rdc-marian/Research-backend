@@ -1,41 +1,17 @@
+"use strict";
+
 const express = require("express");
-const { upload } = require("../middleware/upload");
-const { isS3Configured } = require("../config/s3");
-const { uploadBuffer } = require("../utils/s3Upload");
-const { asyncHandler } = require("../utils/asyncHandler");
-
 const router = express.Router();
-
-router.post(
-  "/",
-  upload.single("file"),
-  asyncHandler(async (req, res) => {
-    if (!req.file) {
-      res.status(400).json({ message: "file is required" });
-      return;
-    }
-
-    if (!isS3Configured()) {
-      res.status(400).json({ message: "AWS S3 is not configured" });
-      return;
-    }
-
-    const result = await uploadBuffer(req.file.buffer, {
-      folder: "research-uploads",
-      originalName: req.file.originalname,
-      contentType: req.file.mimetype,
+const uploadController = require("../controllers/uploadController");
+const { authenticate } = require("../middleware/auth");
+const { upload } = require("../middleware/upload");
+// Protected upload endpoint using multer memory storage
+router.post("/", authenticate, upload.single("file"), uploadController.handleUpload);
+// GET handler to simulate serving the uploaded file for MVP/testing purposes
+router.get("/:key", (req, res) => {
+    res.json({
+        message: "File serving simulation for MVP",
+        fileKey: req.params.key,
     });
-
-    res.status(201).json({
-      item: {
-        url: result.url,
-        publicId: result.key,
-        originalName: req.file.originalname,
-        mimeType: req.file.mimetype,
-        size: req.file.size,
-      },
-    });
-  })
-);
-
+});
 module.exports = router;

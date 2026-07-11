@@ -1,30 +1,27 @@
-const mongoose = require("mongoose");
+"use strict";
 
-const SubmissionSchema = new mongoose.Schema(
-  {
+const mongoose = require("mongoose");
+const SubmissionSchema = new mongoose.Schema({
     title: { type: String, required: true, trim: true },
     abstract: { type: String, required: true, trim: true },
     department: { type: String, required: true, trim: true },
     scholar: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     supervisor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     status: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected", "In Review"],
-      default: "Pending",
+        type: String,
+        enum: ["Pending", "Approved", "Rejected", "In Review"],
+        default: "Pending",
     },
     submittedAt: { type: Date, default: Date.now },
     file: {
-      url: String,
-      publicId: String,
-      originalName: String,
-      mimeType: String,
-      size: Number,
+        url: String,
+        publicId: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
     },
     reviewer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     reviewNote: String,
     reviewedAt: Date,
-  },
-  { timestamps: true }
-);
-
+}, { timestamps: true });
 module.exports = mongoose.model("Submission", SubmissionSchema);

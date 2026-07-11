@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
+"use strict";
 
-const QualificationSchema = new mongoose.Schema(
-  {
+const mongoose = require("mongoose");
+const QualificationSchema = new mongoose.Schema({
     scholar: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     degree: { type: String, required: true, trim: true },
     subject: { type: String, required: true, trim: true },
@@ -11,22 +11,19 @@ const QualificationSchema = new mongoose.Schema(
     percentage: { type: Number },
     status: { type: String, enum: ["Completed", "Pursuing"], default: "Completed" },
     document: {
-      url: String,
-      publicId: String,
-      originalName: String,
-      mimeType: String,
-      size: Number,
+        url: String,
+        publicId: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
     },
     verificationStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
+        type: String,
+        enum: ["Pending", "Approved", "Rejected"],
+        default: "Pending",
     },
     guideNote: String,
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     verifiedAt: Date,
-  },
-  { timestamps: true }
-);
-
+}, { timestamps: true });
 module.exports = mongoose.model("Qualification", QualificationSchema);

@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
+"use strict";
 
-const PublicationSchema = new mongoose.Schema(
-  {
+const mongoose = require("mongoose");
+const PublicationSchema = new mongoose.Schema({
     scholar: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true, trim: true },
     authors: { type: String, required: true, trim: true },
@@ -13,28 +13,25 @@ const PublicationSchema = new mongoose.Schema(
     publishDate: { type: Date, required: true },
     impactFactor: { type: Number },
     indexing: {
-      type: [String],
-      enum: ["Scopus", "Web of Science", "UGC CARE", "Other"],
-      default: ["Other"],
+        type: [String],
+        enum: ["Scopus", "Web of Science", "UGC CARE", "Other"],
+        default: ["Other"],
     },
     publicationUrl: { type: String, trim: true },
     document: {
-      url: String,
-      publicId: String,
-      originalName: String,
-      mimeType: String,
-      size: Number,
+        url: String,
+        publicId: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
     },
     verificationStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
+        type: String,
+        enum: ["Pending", "Approved", "Rejected"],
+        default: "Pending",
     },
     guideNote: String,
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     verifiedAt: Date,
-  },
-  { timestamps: true }
-);
-
+}, { timestamps: true });
 module.exports = mongoose.model("Publication", PublicationSchema);

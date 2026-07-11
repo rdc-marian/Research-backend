@@ -1,81 +1,9 @@
+"use strict";
+
 const express = require("express");
-const Submission = require("../models/Submission");
-const User = require("../models/User");
-const { asyncHandler } = require("../utils/asyncHandler");
-
 const router = express.Router();
-
-const parseDate = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const buildMatch = async (params) => {
-  const match = {};
-
-  if (params.department) {
-    match.department = params.department;
-  }
-
-  if (params.guideId || params.researchCenterId) {
-    const scholarQuery = {
-      $or: [{ role: "scholar" }, { roles: "scholar" }],
-    };
-    if (params.guideId) scholarQuery.guide = params.guideId;
-    if (params.researchCenterId) scholarQuery.researchCenter = params.researchCenterId;
-
-    const scholars = await User.find(scholarQuery).select("_id");
-    match.scholar = { $in: scholars.map((item) => item._id) };
-  }
-
-  const fromDate = parseDate(params.from);
-  const toDate = parseDate(params.to);
-
-  if (fromDate || toDate) {
-    match.submittedAt = {};
-    if (fromDate) match.submittedAt.$gte = fromDate;
-    if (toDate) match.submittedAt.$lte = toDate;
-  }
-
-  return match;
-};
-
-router.get(
-  "/summary",
-  asyncHandler(async (req, res) => {
-    const match = await buildMatch(req.query);
-    const total = await Submission.countDocuments(match);
-
-    const statusAgg = await Submission.aggregate([
-      { $match: match },
-      { $group: { _id: "$status", total: { $sum: 1 } } },
-    ]);
-
-    const byStatus = {
-      Pending: 0,
-      Approved: 0,
-      Rejected: 0,
-      "In Review": 0,
-    };
-
-    statusAgg.forEach((item) => {
-      byStatus[item._id] = item.total;
-    });
-
-    const departmentAgg = await Submission.aggregate([
-      { $match: match },
-      { $group: { _id: "$department", total: { $sum: 1 } } },
-      { $sort: { total: -1 } },
-    ]);
-
-    const byDepartment = departmentAgg.map((item) => ({
-      department: item._id,
-      total: item.total,
-    }));
-
-    res.json({ total, byStatus, byDepartment });
-  })
-);
-
+const reportController = require("../controllers/reportController");
+const { authenticate } = require("../middleware/auth");
+router.use(authenticate);
+router.get("/summary", reportController.getSummary);
 module.exports = router;
