@@ -64,21 +64,34 @@ const create = asyncHandler(async (req, res) => {
 const update = asyncHandler(async (req, res) => {
     const { id } = req.params;
     
-    // Authorization: User must be admin OR updating their own user details
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    // Authorization: User must be admin OR updating their own user details OR their guide
     const isSelf = req.user && req.user.userId === id;
     const isAdmin = req.user && req.user.role === "admin";
+    const isGuide = req.user && targetUser.guide && targetUser.guide.toString() === req.user.userId;
     
-    if (!isAdmin && !isSelf) {
+    if (!isAdmin && !isSelf && !isGuide) {
         return res.status(403).json({ message: "You are not authorized to update this user" });
     }
 
     const updates = { ...req.body };
 
     // Regular users shouldn't be allowed to change roles, status or password requirement flags
-    if (!isAdmin) {
+    if (!isAdmin && !isGuide) {
         delete updates.role;
         delete updates.roles;
         delete updates.status;
+        delete updates.requirePasswordChange;
+    }
+
+    // Guides can only update status, not roles/password requirements
+    if (isGuide) {
+        delete updates.role;
+        delete updates.roles;
         delete updates.requirePasswordChange;
     }
 
@@ -101,9 +114,6 @@ const update = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
         .populate("researchCenter", "name code")
         .populate("guide", "name email");
-    if (!user) {
-        return res.status(404).json({ message: "User not found" });
-    }
     res.json({ item: user });
 });
 // Delete a user
