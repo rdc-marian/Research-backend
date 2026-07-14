@@ -22,21 +22,10 @@ const UserSchema = new mongoose.Schema({
     researchCenter: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ResearchCenter",
-        required: function requiredResearchCenter() {
-            if (this.status === "PendingApproval") return false;
-            return (this.roles?.includes("scholar") ||
-                this.roles?.includes("research_guide") ||
-                this.role === "scholar" ||
-                this.role === "research_guide");
-        },
     },
     guide: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: function requiredGuide() {
-            if (this.status === "PendingApproval") return false;
-            return this.roles?.includes("scholar") || this.role === "scholar";
-        },
     },
     status: { type: String, enum: ["Active", "Inactive", "PendingApproval"], default: "Active" },
     phone: { type: String, trim: true },
