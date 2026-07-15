@@ -10,7 +10,9 @@ router.post("/login", authController.login);
 router.get("/me", authenticate, authController.getMe);
 // Protected logout route
 router.post("/logout", authController.logout);
-// Protected change-password routes (supports both POST and PATCH)
+
+// Protected change-password route
 router.post("/change-password", authenticate, authController.changePassword);
 router.patch("/change-password", authenticate, authController.changePassword);
+
 module.exports = router;

@@ -36,6 +36,7 @@ const UserSchema = new mongoose.Schema({
     avatar: { type: String },
     academicYear: { type: String, trim: true },
     preferences: { type: mongoose.Schema.Types.Mixed, default: {} },
+    permissions: { type: [String], default: [] },
 }, { timestamps: true });
 UserSchema.pre("validate", function normalizeRoleFields(next) {
     const { primaryRole, roles } = normalizeRoles({ role: this.role, roles: this.roles });

@@ -47,6 +47,7 @@ const login = asyncHandler(async (req, res) => {
         userId: user._id,
         role: role,
         roles: user.roles,
+        permissions: user.permissions || [],
         requirePasswordChange: user.requirePasswordChange || false
     }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     // Set JWT as HTTP-only cookie
@@ -67,6 +68,7 @@ const login = asyncHandler(async (req, res) => {
         researchCenter: user.researchCenter,
         guide: user.guide,
         requirePasswordChange: user.requirePasswordChange || false,
+        permissions: user.permissions || [],
         designation: user.designation,
         uniqueId: user.uniqueId,
         avatar: user.avatar,
@@ -106,6 +108,7 @@ const getMe = asyncHandler(async (req, res) => {
         researchCenter: user.researchCenter,
         guide: user.guide,
         requirePasswordChange: user.requirePasswordChange || false,
+        permissions: user.permissions || [],
         designation: user.designation,
         uniqueId: user.uniqueId,
         avatar: user.avatar,
@@ -144,6 +147,7 @@ const changePassword = asyncHandler(async (req, res) => {
         userId: user._id,
         role: role,
         roles: user.roles,
+        permissions: user.permissions || [],
         requirePasswordChange: false
     }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     // Set the updated cookie
@@ -162,6 +166,7 @@ const changePassword = asyncHandler(async (req, res) => {
             email: user.email,
             role: role,
             roles: user.roles,
+            permissions: user.permissions || [],
             requirePasswordChange: false,
             designation: user.designation,
             uniqueId: user.uniqueId,
