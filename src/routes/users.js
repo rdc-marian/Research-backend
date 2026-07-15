@@ -23,5 +23,10 @@ router.post("/", (req, res, next) => {
     });
 }, userController.create);
 router.patch("/:id", authenticate, userController.update);
-router.delete("/:id", authenticate, authorizeRoles(["admin"]), userController.delete);
+router.delete("/:id", authenticate, (req, res, next) => {
+    if (req.user && (req.user.role === "admin" || req.user.userId === req.params.id)) {
+        return next();
+    }
+    return res.status(403).json({ message: "Forbidden" });
+}, userController.delete);
 module.exports = router;

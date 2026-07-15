@@ -39,6 +39,19 @@ const create = asyncHandler(async (req, res) => {
     // Hash password (generate temporary password if not provided)
     const tempPassword = password || "Welcome123";
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    let finalResearchCenter = researchCenterId;
+    let finalDepartment = department;
+
+    const isScholar = role === "scholar" || (roles && roles.includes("scholar"));
+    if (isScholar && guideId) {
+        const guideUser = await User.findById(guideId);
+        if (guideUser) {
+            finalResearchCenter = guideUser.researchCenter;
+            finalDepartment = guideUser.department;
+        }
+    }
+
     // Map incoming researchCenterId and guideId to references
     const newUser = new User({
         name,
@@ -46,8 +59,8 @@ const create = asyncHandler(async (req, res) => {
         password: hashedPassword,
         role,
         roles,
-        department,
-        researchCenter: researchCenterId || undefined,
+        department: finalDepartment,
+        researchCenter: finalResearchCenter || undefined,
         guide: guideId || undefined,
         status: status || "Active",
         phone,
@@ -106,6 +119,16 @@ const update = asyncHandler(async (req, res) => {
     if (updates.guideId !== undefined) {
         updates.guide = updates.guideId || null;
         delete updates.guideId;
+
+        // If updating a scholar's guide, auto-update their research center to match the new guide's
+        const isScholar = targetUser.role === "scholar" || targetUser.roles?.includes("scholar") || updates.role === "scholar" || updates.roles?.includes("scholar");
+        if (updates.guide && isScholar) {
+            const guideUser = await User.findById(updates.guide);
+            if (guideUser) {
+                updates.researchCenter = guideUser.researchCenter;
+                updates.department = guideUser.department;
+            }
+        }
     }
     if (updates.researchCenterId !== undefined) {
         updates.researchCenter = updates.researchCenterId || null;
