@@ -30,12 +30,15 @@ const reportRoutes = require("./reports");
 const settingsRoutes = require("./settings");
 const uploadRoutes = require("./uploads");
 const healthRoutes = require("./health");
+const researchGuidesRoutes = require("./researchGuides");
 const submissionController = require("../controllers/submissionController");
 // Mount sub-routes under their respective prefixes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.use("/research-guides", researchGuidesRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/research-centers", researchCenterRoutes);
+router.use("/research-centres", researchCenterRoutes);
 router.use("/submissions", submissionRoutes);
 router.use("/leaves", leaveRoutes);
 router.use("/portfolio", portfolioRoutes);

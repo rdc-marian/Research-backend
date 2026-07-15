@@ -47,9 +47,19 @@ const update = asyncHandler(async (req, res) => {
     }
     res.json({ item: department });
 });
+// Delete a department
+const deleteDept = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const department = await Department.findByIdAndDelete(id);
+    if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+    }
+    res.json({ message: "Success" });
+});
 module.exports = {
     getAll,
     getOne,
     create,
     update,
+    delete: deleteDept,
 };

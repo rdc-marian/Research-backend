@@ -25,10 +25,21 @@ const normalizeRoles = ({ role, roles } = {}) => {
     }
     return { primaryRole, roles: normalizedRoles };
 };
-// Check if a user has a specific role
-const hasRole = (user, role) => user?.roles?.includes(role) || user?.role === role;
-// Query helper for checking if a user has a role in DB query
-const buildRoleQuery = (role) => ({ $or: [{ role }, { roles: role }] });
+// Check if a user has a specific role or permission
+const hasRole = (user, role) => 
+    user?.roles?.includes(role) || 
+    user?.role === role || 
+    user?.permissions?.includes(role);
+
+// Query helper for checking if a user has a role or permission in DB query
+const buildRoleQuery = (role) => ({
+    $or: [
+        { role },
+        { roles: role },
+        { permissions: role }
+    ]
+});
+
 module.exports = {
     ROLE_OPTIONS,
     buildRoleQuery,

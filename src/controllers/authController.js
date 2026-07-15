@@ -38,8 +38,8 @@ const login = asyncHandler(async (req, res) => {
         await user.save();
     }
     // Verify role
-    const allowedRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
-    if (!allowedRoles.includes(role) && user.role !== role) {
+    const { hasRole } = require("../utils/roles");
+    if (!hasRole(user, role)) {
         return res.status(403).json({ message: "You do not have access to the selected role" });
     }
     // Generate JWT token using the selected role
@@ -58,22 +58,23 @@ const login = asyncHandler(async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
     // Return token and user details to frontend
+    const userObj = user.toObject();
     const userData = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
+        _id: userObj._id,
+        name: userObj.name,
+        email: userObj.email,
         role: role,
-        roles: user.roles,
-        department: user.department,
-        researchCenter: user.researchCenter,
-        guide: user.guide,
-        requirePasswordChange: user.requirePasswordChange || false,
-        permissions: user.permissions || [],
-        designation: user.designation,
-        uniqueId: user.uniqueId,
-        avatar: user.avatar,
-        academicYear: user.academicYear,
-        preferences: user.preferences,
+        roles: userObj.roles,
+        department: userObj.department,
+        researchCenter: userObj.researchCenter,
+        guide: userObj.guide,
+        requirePasswordChange: userObj.requirePasswordChange || false,
+        permissions: userObj.permissions || [],
+        designation: userObj.designation,
+        uniqueId: userObj.uniqueId,
+        avatar: userObj.avatar,
+        academicYear: userObj.academicYear,
+        preferences: userObj.preferences,
     };
     res.json({
         token,
@@ -98,16 +99,17 @@ const getMe = asyncHandler(async (req, res) => {
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
+    const userObj = user.toObject();
     const userData = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: req.user.role || user.role,
-        roles: user.roles,
-        department: user.department,
-        researchCenter: user.researchCenter,
-        guide: user.guide,
-        requirePasswordChange: user.requirePasswordChange || false,
+        _id: userObj._id,
+        name: userObj.name,
+        email: userObj.email,
+        role: req.user.role || userObj.role,
+        roles: userObj.roles,
+        department: userObj.department,
+        researchCenter: userObj.researchCenter,
+        guide: userObj.guide,
+        requirePasswordChange: userObj.requirePasswordChange || false,
         permissions: user.permissions || [],
         designation: user.designation,
         uniqueId: user.uniqueId,
