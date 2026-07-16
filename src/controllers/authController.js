@@ -14,9 +14,11 @@ const login = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Email, password, and role are required" });
     }
     // Find user by email and populate research center & guide references
+    console.log("Login attempt:", { email, role, passwordLength: password ? password.length : 0 });
     const user = await User.findOne({ email })
         .populate("researchCenter", "name code")
         .populate("guide", "name email");
+    console.log("Found user in DB:", user ? { _id: user._id, email: user.email, roles: user.roles, passwordHash: user.password } : null);
     if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -26,6 +28,7 @@ const login = asyncHandler(async (req, res) => {
     }
     // Verify password using bcrypt
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password comparison result:", isMatch);
     if (!isMatch) {
         if (user.passwordChangedByAdmin) {
             return res.status(401).json({ message: "Password changed by Admin. Please use your new password." });

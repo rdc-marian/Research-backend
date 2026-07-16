@@ -5,12 +5,12 @@ const router = express.Router();
 const researchCenterController = require("../controllers/researchCenterController");
 const { authenticate, authorizeRoles } = require("../middleware/auth");
 
+// Public route for landing page / registration dropdowns
+router.get("/", researchCenterController.getAll);
+
 router.use(authenticate);
 
-router
-    .route("/")
-    .get(researchCenterController.getAll)
-    .post(authorizeRoles(["admin"]), researchCenterController.create);
+router.post("/", authorizeRoles(["admin"]), researchCenterController.create);
 
 router
     .route("/:id")

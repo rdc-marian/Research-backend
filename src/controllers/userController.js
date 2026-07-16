@@ -46,7 +46,7 @@ const getResearchGuides = asyncHandler(async (req, res) => {
 
 // Create a new user
 const create = asyncHandler(async (req, res) => {
-    const { name, email, password, role, roles, department, researchCenterId, guideId, status, phone } = req.body;
+    const { name, email, password, role, roles, permissions, department, researchCenterId, guideId, status, phone } = req.body;
     
     // Validate inputs
     if (!name || !email) {
@@ -107,6 +107,7 @@ const create = asyncHandler(async (req, res) => {
         password: hashedPassword,
         role,
         roles,
+        permissions,
         department: finalDepartment,
         researchCenter: finalResearchCenter || undefined,
         guide: finalGuide || undefined,
@@ -227,7 +228,14 @@ const update = asyncHandler(async (req, res) => {
         }
     }
 
-    const user = await User.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
+    // Copy updates to targetUser document so validation and normalizeRoleFields run
+    Object.keys(updates).forEach((key) => {
+        targetUser[key] = updates[key];
+    });
+
+    await targetUser.save();
+
+    const user = await User.findById(id)
         .populate("researchCenter", "name code")
         .populate("guide", "name email");
         
