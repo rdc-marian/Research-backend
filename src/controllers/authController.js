@@ -23,8 +23,14 @@ const login = asyncHandler(async (req, res) => {
         return res.status(401).json({ message: "Invalid email or password" });
     }
     // Verify status is active
+    if (user.status === "PendingApproval") {
+        return res.status(403).json({
+            message: "Your account is pending approval from your Research Guide.",
+            pendingApproval: true
+        });
+    }
     if (user.status !== "Active") {
-        return res.status(403).json({ message: "Your account is currently inactive" });
+        return res.status(403).json({ message: "Your account is currently inactive. Please contact the administrator." });
     }
     // Verify password using bcrypt
     const isMatch = await bcrypt.compare(password, user.password);
