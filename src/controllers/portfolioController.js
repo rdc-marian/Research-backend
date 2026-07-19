@@ -12,16 +12,16 @@ const User = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
 // Get portfolio item summary counts (Total, Pending, Approved, Rejected) for a scholar
 const getSummary = asyncHandler(async (req, res) => {
-    const { scholarId, department, guideId } = req.query;
+    const { scholarId, researchCenterId, guideId } = req.query;
     let scholarsList = [];
     if (scholarId) {
         scholarsList = [scholarId];
     }
-    else if (department || guideId) {
+    else if (researchCenterId || guideId) {
         const scholarQuery = { $or: [{ role: "scholar" }, { roles: "scholar" }],
         };
-        if (department)
-            scholarQuery.department = department;
+        if (researchCenterId)
+            scholarQuery.researchCenter = researchCenterId;
         if (guideId)
             scholarQuery.guide = guideId;
         const users = await User.find(scholarQuery).select("_id");
@@ -74,26 +74,34 @@ const getSummary = asyncHandler(async (req, res) => {
 });
 // Get all pending approvals across all portfolio categories for a guide's scholars
 const getApprovals = asyncHandler(async (req, res) => {
-    const { guideId, department } = req.query;
+    const { guideId, researchCenterId } = req.query;
     const scholarQuery = { $or: [{ role: "scholar" }, { roles: "scholar" }],
     };
     if (guideId)
         scholarQuery.guide = guideId;
-    if (department)
-        scholarQuery.department = department;
+    if (researchCenterId)
+        scholarQuery.researchCenter = researchCenterId;
     const scholars = await User.find(scholarQuery).select("_id");
     const scholarIds = scholars.map((item) => item._id);
     const query = { scholar: { $in: scholarIds }, verificationStatus: "Pending" };
     const leaveQuery = { scholar: { $in: scholarIds }, status: "Pending" };
+    const scholarPopulate = {
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+            { path: "researchCenter", select: "name code" },
+            { path: "guide", select: "name email" }
+        ]
+    };
     const [qualifications, publications, conferences, patents, workshops, memberships, scholarships, leaves,] = await Promise.all([
-        Qualification.find(query).populate("scholar", "name email department guide"),
-        Publication.find(query).populate("scholar", "name email department guide"),
-        Conference.find(query).populate("scholar", "name email department guide"),
-        Patent.find(query).populate("scholar", "name email department guide"),
-        Workshop.find(query).populate("scholar", "name email department guide"),
-        Membership.find(query).populate("scholar", "name email department guide"),
-        Scholarship.find(query).populate("scholar", "name email department guide"),
-        LeaveApplication.find(leaveQuery).populate("scholar", "name email department guide"),
+        Qualification.find(query).populate(scholarPopulate),
+        Publication.find(query).populate(scholarPopulate),
+        Conference.find(query).populate(scholarPopulate),
+        Patent.find(query).populate(scholarPopulate),
+        Workshop.find(query).populate(scholarPopulate),
+        Membership.find(query).populate(scholarPopulate),
+        Scholarship.find(query).populate(scholarPopulate),
+        LeaveApplication.find(leaveQuery).populate(scholarPopulate),
     ]);
     const allApprovals = [
         ...qualifications.map((item) => ({ ...item.toObject(), category: "qualification" })),

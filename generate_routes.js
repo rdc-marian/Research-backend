@@ -8,7 +8,6 @@ const models = [
   { name: 'Award', route: 'awards' },
   { name: 'Consultancy', route: 'consultancy' },
   { name: 'ResourcePerson', route: 'resourcePerson' },
-  { name: 'DepartmentActivity', route: 'departmentActivities' },
   { name: 'Collaboration', route: 'collaborations' },
   { name: 'ScholarProgress', route: 'scholarProgress' }
 ];
@@ -26,17 +25,17 @@ const router = express.Router();
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const { scholarId, status, department, guideId } = req.query;
+    const { scholarId, status, researchCenterId, guideId } = req.query;
     const query = {};
 
     if (scholarId) query.scholar = scholarId;
     if (status) query.verificationStatus = status;
 
-    if (department || guideId) {
+    if (researchCenterId || guideId) {
       const scholarQuery = {
         $or: [{ role: "scholar" }, { roles: "scholar" }],
       };
-      if (department) scholarQuery.department = department;
+      if (researchCenterId) scholarQuery.researchCenter = researchCenterId;
       if (guideId) scholarQuery.guide = guideId;
 
       const scholars = await User.find(scholarQuery).select("_id");
@@ -44,7 +43,7 @@ router.get(
     }
 
     const items = await ${modelName}.find(query)
-      .populate("scholar", "name email department guide")
+      .populate("scholar", "name email researchCenter guide")
       .populate("verifiedBy", "name email")
       .sort({ createdAt: -1 });
 
@@ -81,7 +80,7 @@ router.post(
 
     const item = await ${modelName}.create(data);
     const populated = await item.populate([
-      { path: "scholar", select: "name email department guide" }
+      { path: "scholar", select: "name email researchCenter guide" }
     ]);
 
     res.status(201).json({ item: populated });
@@ -92,7 +91,7 @@ router.get(
   "/:id",
   asyncHandler(async (req, res) => {
     const item = await ${modelName}.findById(req.params.id)
-      .populate("scholar", "name email department guide")
+      .populate("scholar", "name email researchCenter guide")
       .populate("verifiedBy", "name email");
 
     if (!item) {
@@ -136,7 +135,7 @@ router.patch(
     const item = await ${modelName}.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
-    }).populate("scholar", "name email department guide");
+    }).populate("scholar", "name email researchCenter guide");
 
     if (!item) {
       res.status(404).json({ message: "Item not found" });
@@ -180,7 +179,7 @@ router.patch(
       new: true,
       runValidators: true,
     })
-      .populate("scholar", "name email department guide")
+      .populate("scholar", "name email researchCenter guide")
       .populate("verifiedBy", "name email");
 
     if (!item) {

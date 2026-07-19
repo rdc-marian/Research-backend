@@ -4,7 +4,6 @@ const express = require("express");
 const router = express.Router();
 const authRoutes = require("./auth");
 const userRoutes = require("./users");
-const departmentRoutes = require("./departments");
 const researchCenterRoutes = require("./researchCenters");
 const submissionRoutes = require("./submissions");
 const leaveRoutes = require("./leaves");
@@ -32,11 +31,49 @@ const uploadRoutes = require("./uploads");
 const healthRoutes = require("./health");
 const researchGuidesRoutes = require("./researchGuides");
 const submissionController = require("../controllers/submissionController");
-// Mount sub-routes under their respective prefixes
+const authController = require("../controllers/authController");
+const userController = require("../controllers/userController");
+const researchCenterController = require("../controllers/researchCenterController");
+const { authenticate } = require("../middleware/auth");
+
+// ==========================================
+// 1. Genuinely Public Routes (No Auth Barrier)
+// ==========================================
+
+// Health check
+router.use("/health", healthRoutes);
+
+// Auth login
+router.post("/auth/login", authController.login);
+
+// Public dropdowns & registers
+router.use("/research-guides", researchGuidesRoutes);
+router.get("/research-centers", researchCenterController.getAll);
+router.get("/research-centres", researchCenterController.getAll);
+
+// Public user registration
+router.post("/users", (req, res, next) => {
+    if (req.body && req.body.status === "PendingApproval") {
+        const userRoles = req.body.roles || [req.body.role];
+        const hasAdminRole = userRoles.some((role) => role === "admin");
+        if (hasAdminRole) {
+            return res.status(403).json({ message: "Cannot register as administrator" });
+        }
+        return userController.create(req, res, next);
+    }
+    next();
+});
+
+// ==========================================
+// 2. Centralized Authentication Barrier
+// ==========================================
+router.use(authenticate);
+
+// ==========================================
+// 3. Protected Route Groups (Require Token)
+// ==========================================
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
-router.use("/research-guides", researchGuidesRoutes);
-router.use("/departments", departmentRoutes);
 router.use("/research-centers", researchCenterRoutes);
 router.use("/research-centres", researchCenterRoutes);
 router.use("/submissions", submissionRoutes);
@@ -54,7 +91,6 @@ router.use("/grants", grantRoutes);
 router.use("/guidance", guidanceRoutes);
 router.use("/awards", awardRoutes);
 router.use("/consultancy", consultancyRoutes);
-// Support both URL patterns (kebab-case and camelCase)
 router.use("/resource-person", resourcePersonRoutes);
 router.use("/resourcePerson", resourcePersonRoutes);
 router.use("/collaborations", collaborationRoutes);
@@ -65,7 +101,8 @@ router.use("/incentives", incentiveRoutes);
 router.use("/reports", reportRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/uploads", uploadRoutes);
-router.use("/health", healthRoutes);
+
 // Directly map submission status checks for approvals report
 router.get("/approvals", submissionController.getAll);
+
 module.exports = router;

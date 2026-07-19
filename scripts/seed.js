@@ -4,7 +4,6 @@ const { connectDB } = require("../src/config/db");
 
 // Import all models
 const User = require("../src/models/User");
-const Department = require("../src/models/Department");
 const ResearchCenter = require("../src/models/ResearchCenter");
 const Submission = require("../src/models/Submission");
 const LeaveApplication = require("../src/models/LeaveApplication");
@@ -33,7 +32,6 @@ const run = async () => {
   console.log("Cleaning database collections...");
   await Promise.all([
     User.deleteMany(),
-    Department.deleteMany(),
     ResearchCenter.deleteMany(),
     Submission.deleteMany(),
     LeaveApplication.deleteMany(),
@@ -68,7 +66,6 @@ const run = async () => {
     role: "admin",
     roles: ["admin"],
     password: hashedPassword,
-    department: "Administration",
     status: "Active",
   });
 
@@ -78,7 +75,6 @@ const run = async () => {
     role: "coordinator",
     roles: ["coordinator"],
     password: hashedPassword,
-    department: "MCA",
     phone: "9876543210",
     status: "Active",
   });
@@ -89,73 +85,34 @@ const run = async () => {
     role: "library",
     roles: ["library"],
     password: hashedPassword,
-    department: "Library",
     status: "Active",
   });
 
-  // 2. Create Departments
-  console.log("Creating departments...");
-  const departments = await Department.insertMany([
-    {
-      name: "Computer Science",
-      email: "cs@univ.edu",
-      coordinator: admin._id,
-      totalScholars: 12,
-    },
-    {
-      name: "Information Technology",
-      email: "it@univ.edu",
-      coordinator: admin._id,
-      totalScholars: 8,
-    },
-    {
-      name: "Electronics",
-      email: "ece@univ.edu",
-      coordinator: admin._id,
-      totalScholars: 6,
-    },
-    {
-      name: "MCA",
-      email: "coordinator@univ.edu",
-      coordinator: coordinator._id,
-      totalScholars: 28,
-    },
-  ]);
-
-  const csDept = departments.find((d) => d.name === "Computer Science");
-  const itDept = departments.find((d) => d.name === "Information Technology");
-  const eceDept = departments.find((d) => d.name === "Electronics");
-  const mcaDept = departments.find((d) => d.name === "MCA");
-
-  // 3. Create Research Centers
+  // 2. Create Research Centers
   console.log("Creating research centers...");
   const researchCenters = await ResearchCenter.insertMany([
     {
       name: "Computer Science Research Center",
       code: "CSRC",
       coordinator: admin._id,
-      department: csDept._id,
       status: "Active",
     },
     {
       name: "Information Technology Research Center",
       code: "ITRC",
       coordinator: admin._id,
-      department: itDept._id,
       status: "Active",
     },
     {
       name: "Electronics Research Center",
       code: "ECRC",
       coordinator: admin._id,
-      department: eceDept._id,
       status: "Active",
     },
     {
       name: "MCA Research Center",
       code: "MCA",
       coordinator: coordinator._id,
-      department: mcaDept._id,
       status: "Active",
     },
   ]);
@@ -165,7 +122,7 @@ const run = async () => {
   const eceCenter = researchCenters.find((c) => c.code === "ECRC");
   const mcaCenter = researchCenters.find((c) => c.code === "MCA");
 
-  // 4. Create Guides/Faculty Users
+  // 3. Create Guides/Faculty Users
   console.log("Creating faculty/guide users...");
   const mcaGuide = await User.create({
     name: "Dr. Elizabeth Paul",
@@ -173,7 +130,6 @@ const run = async () => {
     role: "faculty",
     roles: ["faculty", "research_guide"],
     password: hashedPassword,
-    department: "MCA",
     status: "Active",
     researchCenter: mcaCenter._id,
   });
@@ -184,7 +140,6 @@ const run = async () => {
     role: "faculty",
     roles: ["faculty", "research_guide"],
     password: hashedPassword,
-    department: "Computer Science",
     status: "Active",
     researchCenter: csCenter._id,
   });
@@ -195,7 +150,6 @@ const run = async () => {
     role: "research_guide",
     roles: ["research_guide", "faculty"],
     password: hashedPassword,
-    department: "Information Technology",
     status: "Active",
     researchCenter: itCenter._id,
   });
@@ -206,12 +160,11 @@ const run = async () => {
     role: "research_guide",
     roles: ["research_guide", "faculty"],
     password: hashedPassword,
-    department: "Electronics",
     status: "Active",
     researchCenter: eceCenter._id,
   });
 
-  // 5. Create Scholars
+  // 4. Create Scholars
   console.log("Creating scholar users...");
   const scholars = await User.insertMany([
     {
@@ -220,7 +173,6 @@ const run = async () => {
       role: "scholar",
       roles: ["scholar"],
       password: hashedPassword,
-      department: "MCA",
       status: "Active",
       researchCenter: mcaCenter._id,
       guide: mcaGuide._id,
@@ -231,7 +183,6 @@ const run = async () => {
       role: "scholar",
       roles: ["scholar"],
       password: hashedPassword,
-      department: "MCA",
       status: "Active",
       researchCenter: mcaCenter._id,
       guide: mcaGuide._id,
@@ -242,7 +193,6 @@ const run = async () => {
       role: "scholar",
       roles: ["scholar"],
       password: hashedPassword,
-      department: "MCA",
       status: "Active",
       researchCenter: mcaCenter._id,
       guide: mcaGuide._id,
@@ -253,7 +203,6 @@ const run = async () => {
       role: "scholar",
       roles: ["scholar"],
       password: hashedPassword,
-      department: "Computer Science",
       status: "Active",
       researchCenter: csCenter._id,
       guide: csGuide._id,
@@ -264,7 +213,6 @@ const run = async () => {
       role: "scholar",
       roles: ["scholar"],
       password: hashedPassword,
-      department: "Electronics",
       status: "Active",
       researchCenter: eceCenter._id,
       guide: eceGuide._id,
@@ -276,13 +224,12 @@ const run = async () => {
   const john = scholars.find((s) => s.email === "john.smith@univ.edu");
   const sarah = scholars.find((s) => s.email === "sarah.wilson@univ.edu");
 
-  // 6. Create Submissions
+  // 5. Create Submissions
   console.log("Creating submissions...");
   await Submission.insertMany([
     {
       title: "AI in Healthcare diagnostic systems",
       abstract: "Explores AI applications for diagnostics and patient monitoring.",
-      department: "Computer Science",
       scholar: john._id,
       supervisor: csGuide._id,
       status: "Pending",
@@ -292,7 +239,6 @@ const run = async () => {
     {
       title: "Smart Cities and IoT optimization",
       abstract: "IoT-driven frameworks for smart city services.",
-      department: "Electronics",
       scholar: sarah._id,
       supervisor: eceGuide._id,
       status: "Approved",
@@ -303,10 +249,10 @@ const run = async () => {
     }
   ]);
 
-  // 7. Create Leaves (None seeded by default)
-  // 8. Create Accomplishments (None seeded by default)
+  // 6. Create Leaves (None seeded by default)
+  // 7. Create Accomplishments (None seeded by default)
 
-  // 9. Create Incentives (for faculty)
+  // 8. Create Incentives (for faculty)
   console.log("Creating incentives...");
   await Incentive.insertMany([
     {
@@ -336,7 +282,7 @@ const run = async () => {
     }
   ]);
 
-  // 10. Create ScholarProgress & ResearchProfile
+  // 9. Create ScholarProgress & ResearchProfile
   console.log("Creating progress tracking and research profiles...");
   for (const s of scholars) {
     await ScholarProgress.create({
@@ -374,7 +320,7 @@ const run = async () => {
     });
   }
 
-  // 11. Create SystemSettings
+  // 10. Create SystemSettings
   console.log("Creating system settings...");
   await SystemSettings.create({
     systemName: "MarianResearch Portal",

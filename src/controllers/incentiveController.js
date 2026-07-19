@@ -18,7 +18,7 @@ const getAll = asyncHandler(async (req, res) => {
 
     const total = await Incentive.countDocuments(query);
     const incentives = await Incentive.find(query)
-        .populate("faculty", "name email department role roles")
+        .populate("faculty", "name email researchCenter role roles")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum);
@@ -113,7 +113,7 @@ const updateStatus = asyncHandler(async (req, res) => {
     const updatedIncentive = await Incentive.findByIdAndUpdate(id, updates, {
         new: true,
         runValidators: true,
-    }).populate("faculty", "name email department");
+    }).populate("faculty", "name email researchCenter");
     if (!updatedIncentive) {
         return res.status(404).json({ message: "Incentive application not found" });
     }

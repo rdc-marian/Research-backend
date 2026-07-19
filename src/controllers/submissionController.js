@@ -15,8 +15,6 @@ const buildSubmissionQuery = async (params) => {
     const query = {};
     if (params.status)
         query.status = params.status;
-    if (params.department)
-        query.department = params.department;
     if (params.scholarId) {
         query.scholar = params.scholarId;
     }
@@ -102,9 +100,9 @@ const getOne = asyncHandler(async (req, res) => {
 });
 // Create a new submission (supports file upload)
 const create = asyncHandler(async (req, res) => {
-    const { title, abstract, department, scholarId, supervisorId } = req.body;
-    if (!title || !abstract || !department || !scholarId) {
-        return res.status(400).json({ message: "title, abstract, department, and scholarId are required" });
+    const { title, abstract, scholarId, supervisorId } = req.body;
+    if (!title || !abstract || !scholarId) {
+        return res.status(400).json({ message: "title, abstract, and scholarId are required" });
     }
     let fileData;
     if (req.file) {
@@ -119,7 +117,6 @@ const create = asyncHandler(async (req, res) => {
     const submission = await Submission.create({
         title,
         abstract,
-        department,
         scholar: scholarId,
         supervisor: supervisorId || undefined,
         file: fileData,
@@ -140,14 +137,12 @@ const create = asyncHandler(async (req, res) => {
 // Update a submission
 const update = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { title, abstract, department, scholarId, supervisorId } = req.body;
+    const { title, abstract, scholarId, supervisorId } = req.body;
     const updates = {};
     if (title !== undefined)
         updates.title = title;
     if (abstract !== undefined)
         updates.abstract = abstract;
-    if (department !== undefined)
-        updates.department = department;
     if (scholarId !== undefined)
         updates.scholar = scholarId;
     if (supervisorId !== undefined) {
@@ -191,6 +186,9 @@ const updateStatus = asyncHandler(async (req, res) => {
     const allowedStatuses = ["Pending", "Approved", "Rejected", "In Review"];
     if (!allowedStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
+    }
+    if (status === "Rejected" && (!note || !note.trim())) {
+        return res.status(400).json({ message: "Rejection reason (note) is required when rejecting a submission" });
     }
     const updates = {
         status,

@@ -8,7 +8,7 @@ const getByUser = asyncHandler(async (req, res) => {
     if (!userId) {
         return res.status(400).json({ message: "userId is required" });
     }
-    const profile = await ResearchProfile.findOne({ userId }).populate("userId", "name email role roles department");
+    const profile = await ResearchProfile.findOne({ userId }).populate("userId", "name email role roles");
     if (!profile) {
         // Return empty profile object rather than 404 to let frontend initialize cleanly
         return res.json({ item: null });
@@ -27,7 +27,7 @@ const upsert = asyncHandler(async (req, res) => {
         new: true,
         upsert: true,
         runValidators: true,
-    }).populate("userId", "name email role roles department");
+    }).populate("userId", "name email role roles");
     res.json({ item: profile });
 });
 module.exports = {

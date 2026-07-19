@@ -5,24 +5,31 @@ const User = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
 // Get all leave applications with optional filtering
 const getAll = asyncHandler(async (req, res) => {
-    const { scholarId, status, department, guideId } = req.query;
+    const { scholarId, status, researchCenterId, guideId } = req.query;
     const query = {};
     if (scholarId)
         query.scholar = scholarId;
     if (status)
         query.status = status;
-    if (department || guideId) {
+    if (researchCenterId || guideId) {
         const scholarQuery = { $or: [{ role: "scholar" }, { roles: "scholar" }],
         };
-        if (department)
-            scholarQuery.department = department;
+        if (researchCenterId)
+            scholarQuery.researchCenter = researchCenterId;
         if (guideId)
             scholarQuery.guide = guideId;
         const scholars = await User.find(scholarQuery).select("_id");
         query.scholar = { $in: scholars.map((item) => item._id) };
     }
     const leaves = await LeaveApplication.find(query)
-        .populate("scholar", "name email department guide")
+        .populate({
+            path: "scholar",
+            select: "name email researchCenter guide",
+            populate: [
+                { path: "researchCenter", select: "name code" },
+                { path: "guide", select: "name email" },
+            ],
+        })
         .populate("verifiedBy", "name email")
         .sort({ createdAt: -1 });
     res.json({ items: leaves });
@@ -31,7 +38,14 @@ const getAll = asyncHandler(async (req, res) => {
 const getOne = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const leave = await LeaveApplication.findById(id)
-        .populate("scholar", "name email department guide")
+        .populate({
+            path: "scholar",
+            select: "name email researchCenter guide",
+            populate: [
+                { path: "researchCenter", select: "name code" },
+                { path: "guide", select: "name email" },
+            ],
+        })
         .populate("verifiedBy", "name email");
     if (!leave) {
         return res.status(404).json({ message: "Leave application not found" });
@@ -65,7 +79,14 @@ const create = asyncHandler(async (req, res) => {
         status: "Pending",
     });
     const populated = await LeaveApplication.findById(leave._id)
-        .populate("scholar", "name email department guide");
+        .populate({
+            path: "scholar",
+            select: "name email researchCenter guide",
+            populate: [
+                { path: "researchCenter", select: "name code" },
+                { path: "guide", select: "name email" },
+            ],
+        });
     res.status(201).json({ item: populated });
 });
 // Update a leave application (supports document upload)
@@ -95,7 +116,14 @@ const update = asyncHandler(async (req, res) => {
     const leave = await LeaveApplication.findByIdAndUpdate(id, updates, {
         new: true,
         runValidators: true,
-    }).populate("scholar", "name email department guide");
+    }).populate({
+        path: "scholar",
+        select: "name email researchCenter guide",
+        populate: [
+            { path: "researchCenter", select: "name code" },
+            { path: "guide", select: "name email" },
+        ],
+    });
     if (!leave) {
         return res.status(404).json({ message: "Leave application not found" });
     }
@@ -136,7 +164,14 @@ const updateStatus = asyncHandler(async (req, res) => {
         new: true,
         runValidators: true,
     })
-        .populate("scholar", "name email department guide")
+        .populate({
+            path: "scholar",
+            select: "name email researchCenter guide",
+            populate: [
+                { path: "researchCenter", select: "name code" },
+                { path: "guide", select: "name email" },
+            ],
+        })
         .populate("verifiedBy", "name email");
     if (!leave) {
         return res.status(404).json({ message: "Leave application not found" });

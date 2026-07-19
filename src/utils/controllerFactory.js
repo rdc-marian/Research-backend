@@ -12,11 +12,17 @@ const createAccomplishmentController = (Model, modelName) => {
     return {
         // 1. Get all items, optionally filtered by scholarId
         getAll: asyncHandler(async (req, res) => {
-            const { scholarId, search, status, page, limit } = req.query;
+            const { scholarId, search, status, page, limit, researchCenterId } = req.query;
             const query = scholarId ? { scholar: scholarId } : {};
 
             if (status) {
                 query.verificationStatus = status;
+            }
+
+            if (researchCenterId) {
+                const User = require("../models/User");
+                const scholars = await User.find({ researchCenter: researchCenterId }).select("_id");
+                query.scholar = { $in: scholars.map((item) => item._id) };
             }
 
             if (search) {
@@ -39,7 +45,7 @@ const createAccomplishmentController = (Model, modelName) => {
 
             const total = await Model.countDocuments(query);
             const items = await Model.find(query)
-                .populate("scholar", "name email department guide")
+                .populate("scholar", "name email researchCenter guide")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNum);
@@ -57,7 +63,7 @@ const createAccomplishmentController = (Model, modelName) => {
         // 2. Get one item by ID
         getOne: asyncHandler(async (req, res) => {
             const { id } = req.params;
-            const item = await Model.findById(id).populate("scholar", "name email department guide");
+            const item = await Model.findById(id).populate("scholar", "name email researchCenter guide");
             if (!item) {
                 return res.status(404).json({ message: `${modelName} not found` });
             }
@@ -72,6 +78,19 @@ const createAccomplishmentController = (Model, modelName) => {
             // Convert body to Mongoose schema data format
             const bodyData = { ...req.body, scholar: scholarId };
             delete bodyData.scholarId;
+            if (typeof bodyData.indexing === "string") {
+                if (bodyData.indexing.startsWith("[")) {
+                    try {
+                        bodyData.indexing = JSON.parse(bodyData.indexing);
+                    } catch (e) {
+                        console.error("Failed to parse indexing JSON:", e);
+                    }
+                } else if (bodyData.indexing.includes(",")) {
+                    bodyData.indexing = bodyData.indexing.split(",").map((s) => s.trim());
+                } else if (bodyData.indexing) {
+                    bodyData.indexing = [bodyData.indexing];
+                }
+            }
             if (req.file) {
                 bodyData.document = {
                     url: `/api/uploads/${req.file.filename}`,
@@ -83,7 +102,7 @@ const createAccomplishmentController = (Model, modelName) => {
             }
             bodyData.verificationStatus = "Pending";
             const item = await Model.create(bodyData);
-            const populated = await Model.findById(item._id).populate("scholar", "name email department guide");
+            const populated = await Model.findById(item._id).populate("scholar", "name email researchCenter guide");
             res.status(201).json({ item: populated });
         }),
         // 4. Update an item (handles optional file upload)
@@ -93,6 +112,19 @@ const createAccomplishmentController = (Model, modelName) => {
             if (updates.scholarId) {
                 updates.scholar = updates.scholarId;
                 delete updates.scholarId;
+            }
+            if (typeof updates.indexing === "string") {
+                if (updates.indexing.startsWith("[")) {
+                    try {
+                        updates.indexing = JSON.parse(updates.indexing);
+                    } catch (e) {
+                        console.error("Failed to parse indexing JSON:", e);
+                    }
+                } else if (updates.indexing.includes(",")) {
+                    updates.indexing = updates.indexing.split(",").map((s) => s.trim());
+                } else if (updates.indexing) {
+                    updates.indexing = [updates.indexing];
+                }
             }
             if (req.file) {
                 updates.document = {
@@ -109,7 +141,7 @@ const createAccomplishmentController = (Model, modelName) => {
             updates.verifiedBy = undefined;
             updates.verifiedAt = undefined;
             const item = await Model.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
-                .populate("scholar", "name email department guide");
+                .populate("scholar", "name email researchCenter guide");
             if (!item) {
                 return res.status(404).json({ message: `${modelName} not found` });
             }
@@ -133,7 +165,7 @@ const createAccomplishmentController = (Model, modelName) => {
                 verifiedAt: status === "Pending" ? null : new Date(),
             };
             const item = await Model.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
-                .populate("scholar", "name email department guide");
+                .populate("scholar", "name email researchCenter guide");
             if (!item) {
                 return res.status(404).json({ message: `${modelName} not found` });
             }

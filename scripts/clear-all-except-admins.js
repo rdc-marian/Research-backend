@@ -28,7 +28,6 @@ const run = async () => {
       role: "admin",
       roles: ["admin"],
       password: hashedPassword,
-      department: "Administration",
       status: "Active",
     });
 
@@ -39,7 +38,6 @@ const run = async () => {
       role: "coordinator",
       roles: ["coordinator"],
       password: hashedPassword,
-      department: "MCA",
       status: "Active",
     });
 
@@ -50,7 +48,6 @@ const run = async () => {
       role: "library",
       roles: ["library"],
       password: hashedPassword,
-      department: "Library",
       status: "Active",
     });
 

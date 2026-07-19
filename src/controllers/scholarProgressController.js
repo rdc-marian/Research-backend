@@ -9,7 +9,7 @@ const getByScholar = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "scholarId is required" });
     }
     const progress = await ScholarProgress.findOne({ scholar: scholarId })
-        .populate("scholar", "name email department guide")
+        .populate("scholar", "name email researchCenter guide")
         .populate("guide", "name email");
     if (!progress) {
         return res.json({ item: null });
@@ -32,7 +32,7 @@ const upsert = asyncHandler(async (req, res) => {
         upsert: true,
         runValidators: true,
     })
-        .populate("scholar", "name email department guide")
+        .populate("scholar", "name email researchCenter guide")
         .populate("guide", "name email");
     res.json({ item: progress });
 });

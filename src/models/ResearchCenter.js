@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const ResearchCenterSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true, unique: true },
     code: { type: String, required: true, trim: true, uppercase: true, unique: true },
-    department: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     officeLocation: { type: String, trim: true },
     contactEmail: { 

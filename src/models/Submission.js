@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const SubmissionSchema = new mongoose.Schema({
     title: { type: String, required: true, trim: true },
     abstract: { type: String, required: true, trim: true },
-    department: { type: String, required: true, trim: true },
     scholar: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     supervisor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     status: {

@@ -1,7 +1,6 @@
 "use strict";
 
 const express = require("express");
-const { authenticate } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
 /**
  * Reusable router factory for all portfolio accomplishment categories.
@@ -11,7 +10,6 @@ const { upload } = require("../middleware/upload");
  */
 const createAccomplishmentRouter = (controller) => {
     const router = express.Router();
-    router.use(authenticate);
     router
         .route("/")
         .get(controller.getAll)

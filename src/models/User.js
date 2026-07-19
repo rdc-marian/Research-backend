@@ -19,7 +19,6 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    department: { type: String, trim: true },
     researchCenter: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ResearchCenter",
@@ -86,20 +85,7 @@ UserSchema.pre("validate", function normalizeRoleFields(next) {
     next();
 });
 
-// Configure serialization to map permissions back to roles for frontend compatibility
-const transformUser = function (doc, ret, options) {
-    if (ret.permissions && ret.permissions.length > 0) {
-        ret.roles = Array.from(new Set([...(ret.roles || []), ...ret.permissions]));
-        // If the primary role in DB is faculty, but the client expects coordinator or research_guide as primary role:
-        // We set primary role to the first one in the roles list (which preserves what frontend expects)
-        if (ret.role === "faculty" && ret.roles[0] !== "faculty") {
-            ret.role = ret.roles[0];
-        }
-    }
-    return ret;
-};
-
-UserSchema.set('toJSON', { transform: transformUser });
-UserSchema.set('toObject', { transform: transformUser });
+UserSchema.set('toJSON', {});
+UserSchema.set('toObject', {});
 
 module.exports = mongoose.model("User", UserSchema);

@@ -15,7 +15,7 @@ const getGuides = asyncHandler(async (req, res) => {
             { permissions: "research_guide" }
         ],
         status: "Active"
-    }).select("name email department uniqueId designation _id");
+    }).select("name email uniqueId designation _id");
     res.json({ items: guides });
 });
 
@@ -26,7 +26,7 @@ const getFaculty = asyncHandler(async (req, res) => {
         researchCenter: id,
         role: "faculty",
         status: "Active"
-    }).select("name email department uniqueId designation _id");
+    }).select("name email uniqueId designation _id");
     res.json({ items: faculty });
 });
 
@@ -37,7 +37,10 @@ const getScholars = asyncHandler(async (req, res) => {
         researchCenter: id,
         role: "scholar",
         status: "Active"
-    }).populate("guide", "name email").select("name email department uniqueId guide status _id");
+    })
+    .populate("guide", "name email")
+    .populate("researchCenter", "name code")
+    .select("name email uniqueId guide status researchCenter _id");
     res.json({ items: scholars });
 });
 
@@ -64,8 +67,6 @@ const create = asyncHandler(async (req, res) => {
     const { 
         name, 
         code, 
-        department, 
-        departmentId, 
         description, 
         officeLocation, 
         contactEmail, 
@@ -74,9 +75,8 @@ const create = asyncHandler(async (req, res) => {
         status 
     } = req.body;
     
-    const finalDept = department || departmentId;
-    if (!name || !code || !finalDept) {
-        return res.status(400).json({ message: "Name, code and department are required" });
+    if (!name || !code) {
+        return res.status(400).json({ message: "Name and code are required" });
     }
 
     // Check uniqueness
@@ -92,7 +92,6 @@ const create = asyncHandler(async (req, res) => {
     const newCenter = new ResearchCenter({
         name,
         code: code.toUpperCase(),
-        department: finalDept,
         description,
         officeLocation,
         contactEmail,
@@ -118,10 +117,6 @@ const update = asyncHandler(async (req, res) => {
     if (updates.coordinatorId !== undefined) {
         updates.coordinator = updates.coordinatorId || null;
         delete updates.coordinatorId;
-    }
-    if (updates.departmentId !== undefined) {
-        updates.department = updates.departmentId || null;
-        delete updates.departmentId;
     }
 
     // Check uniqueness if name or code is updated

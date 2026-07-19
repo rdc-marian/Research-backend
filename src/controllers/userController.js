@@ -6,10 +6,35 @@ const ResearchCenter = require("../models/ResearchCenter");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { buildRoleQuery } = require("../utils/roles");
 
+const isValidResearchGuide = (user) => user?.role === "faculty" && user?.permissions?.includes("research_guide");
+
 // Get all users, optionally filtered by role
 const getAll = asyncHandler(async (req, res) => {
+    const requester = req.user;
+    if (!requester) {
+        return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const requesterRoles = requester.roles || [requester.role];
+    const isAdmin = requesterRoles.includes("admin");
+    const isFaculty = requesterRoles.includes("faculty");
+    const hasGuidePerm = requester.permissions?.includes("research_guide");
+
+    let query = {};
     const { role } = req.query;
-    const query = role ? buildRoleQuery(role) : {};
+    if (role) {
+        query = buildRoleQuery(role);
+    }
+
+    if (isAdmin) {
+        // Admin has full unrestricted access
+    } else if (isFaculty && hasGuidePerm) {
+        // Faculty guides can only fetch their own scholars
+        query.guide = requester.userId;
+    } else {
+        return res.status(403).json({ message: "Access denied: insufficient permissions" });
+    }
+
     const users = await User.find(query)
         .populate("researchCenter", "name code")
         .populate("guide", "name email");
@@ -25,6 +50,28 @@ const getOne = asyncHandler(async (req, res) => {
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
+
+    const requester = req.user;
+    if (!requester) {
+        return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const requesterRoles = requester.roles || [requester.role];
+    const isAdmin = requesterRoles.includes("admin");
+    const isSelf = requester.userId === id;
+
+    if (isAdmin || isSelf) {
+        // Full access
+    } else if (requesterRoles.includes("faculty") && requester.permissions?.includes("research_guide")) {
+        // Faculty guides can only fetch their own scholars
+        const scholarGuideId = user.guide?._id ? user.guide._id.toString() : (user.guide ? user.guide.toString() : null);
+        if (scholarGuideId !== requester.userId) {
+            return res.status(403).json({ message: "Access denied: you are not the guide for this scholar" });
+        }
+    } else {
+        return res.status(403).json({ message: "Access denied: insufficient permissions" });
+    }
+
     res.json({ item: user });
 });
 
@@ -46,7 +93,7 @@ const getResearchGuides = asyncHandler(async (req, res) => {
 
 // Create a new user
 const create = asyncHandler(async (req, res) => {
-    const { name, email, password, role, roles, permissions, department, researchCenterId, guideId, status, phone } = req.body;
+    const { name, email, password, role, roles, permissions, researchCenterId, guideId, status, phone } = req.body;
     
     // Validate inputs
     if (!name || !email) {
@@ -64,7 +111,6 @@ const create = asyncHandler(async (req, res) => {
     const isFaculty = incomingRoles.includes("faculty") || incomingRoles.includes("research_guide") || incomingRoles.includes("coordinator") || role === "faculty" || role === "research_guide" || role === "coordinator";
 
     let finalResearchCenter = researchCenterId;
-    let finalDepartment = department;
     let finalGuide = guideId;
 
     if (isScholar) {
@@ -75,13 +121,13 @@ const create = asyncHandler(async (req, res) => {
         if (!guideUser) {
             return res.status(400).json({ message: "Selected Research Guide does not exist" });
         }
+        if (!isValidResearchGuide(guideUser)) {
+            return res.status(400).json({ message: "Selected guide is not a valid Research Guide" });
+        }
         // Automatically inherit research center from guide
         finalResearchCenter = guideUser.researchCenter;
         if (!finalResearchCenter) {
             return res.status(400).json({ message: "Selected Research Guide does not belong to any Research Centre" });
-        }
-        if (!finalDepartment) {
-            finalDepartment = guideUser.department;
         }
     }
 
@@ -108,7 +154,6 @@ const create = asyncHandler(async (req, res) => {
         role,
         roles,
         permissions,
-        department: finalDepartment,
         researchCenter: finalResearchCenter || undefined,
         guide: finalGuide || undefined,
         status: status || "Active",
@@ -202,12 +247,12 @@ const update = asyncHandler(async (req, res) => {
             if (!guideUser) {
                 return res.status(400).json({ message: "Selected Research Guide does not exist" });
             }
+            if (!isValidResearchGuide(guideUser)) {
+                return res.status(400).json({ message: "Selected guide is not a valid Research Guide" });
+            }
             updates.researchCenter = guideUser.researchCenter;
             if (!updates.researchCenter) {
                 return res.status(400).json({ message: "Selected Research Guide does not belong to any Research Centre" });
-            }
-            if (!updates.department) {
-                updates.department = guideUser.department;
             }
         }
     }
