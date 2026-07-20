@@ -93,7 +93,7 @@ const getResearchGuides = asyncHandler(async (req, res) => {
 
 // Create a new user
 const create = asyncHandler(async (req, res) => {
-    const { name, email, password, role, roles, permissions, researchCenterId, guideId, status, phone } = req.body;
+    const { name, email, password, role, roles, permissions, researchCenterId, guideId, status, phone, department } = req.body;
     
     // Validate inputs
     if (!name || !email) {
@@ -158,6 +158,7 @@ const create = asyncHandler(async (req, res) => {
         guide: finalGuide || undefined,
         status: status || "Active",
         phone,
+        department: isFaculty ? department : undefined,
         requirePasswordChange: password ? false : true,
     });
     
@@ -287,13 +288,18 @@ const update = asyncHandler(async (req, res) => {
     res.json({ item: user });
 });
 
-// Delete a user
+// Delete a user (Admin and Library users cannot be deleted)
 const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const user = await User.findByIdAndDelete(id);
+    const user = await User.findById(id);
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
+    const userRoles = user.roles || (user.role ? [user.role] : []);
+    if (user.role === "admin" || userRoles.includes("admin") || user.role === "library" || userRoles.includes("library")) {
+        return res.status(403).json({ message: "Admin and Library users cannot be deleted, only edited" });
+    }
+    await User.findByIdAndDelete(id);
     res.json({ message: "Success" });
 });
 

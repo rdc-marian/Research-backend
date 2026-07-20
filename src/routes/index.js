@@ -51,6 +51,44 @@ router.use("/research-guides", researchGuidesRoutes);
 router.get("/research-centers", researchCenterController.getAll);
 router.get("/research-centres", researchCenterController.getAll);
 
+// Public landing page statistics
+router.get("/stats", async (req, res) => {
+    try {
+        const ResearchCenter = require("../models/ResearchCenter");
+        const Publication = require("../models/Publication");
+        const Submission = require("../models/Submission");
+        const User = require("../models/User");
+
+        const [centersCount, pubCount, subCount, scholarsCount, guidesCount] = await Promise.all([
+            ResearchCenter.countDocuments({ status: { $ne: "Inactive" } }),
+            Publication.countDocuments(),
+            Submission.countDocuments(),
+            User.countDocuments({
+                $or: [{ role: "scholar" }, { roles: "scholar" }],
+                status: "Active"
+            }),
+            User.countDocuments({
+                $or: [
+                    { role: "research_guide" },
+                    { roles: "research_guide" },
+                    { permissions: "research_guide" }
+                ],
+                status: "Active"
+            })
+        ]);
+
+        res.json({
+            totalCenters: centersCount,
+            totalPublications: pubCount + subCount,
+            totalScholars: scholarsCount,
+            totalGuides: guidesCount
+        });
+    } catch (err) {
+        console.error("Error fetching stats:", err);
+        res.status(500).json({ totalCenters: 0, totalPublications: 0, totalScholars: 0, totalGuides: 0 });
+    }
+});
+
 // Public user registration
 router.post("/users", (req, res, next) => {
     if (req.body && req.body.status === "PendingApproval") {

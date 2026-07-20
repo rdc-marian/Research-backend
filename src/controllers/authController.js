@@ -83,6 +83,7 @@ const login = asyncHandler(async (req, res) => {
         avatar: userObj.avatar,
         academicYear: userObj.academicYear,
         preferences: userObj.preferences,
+        department: userObj.department,
     };
     res.json({
         token,
@@ -123,6 +124,7 @@ const getMe = asyncHandler(async (req, res) => {
         avatar: user.avatar,
         academicYear: user.academicYear,
         preferences: user.preferences,
+        department: user.department,
     };
     res.json({
         user: userData,

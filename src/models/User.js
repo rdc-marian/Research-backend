@@ -39,7 +39,13 @@ const UserSchema = new mongoose.Schema({
     permissions: { type: [String], default: [] },
     admissionDate: { type: Date },
     employeeId: { type: String, trim: true },
+    department: { type: String, trim: true },
 }, { timestamps: true });
+
+UserSchema.index({ guide: 1 });
+UserSchema.index({ researchCenter: 1 });
+UserSchema.index({ role: 1, status: 1 });
+UserSchema.index({ roles: 1 });
 
 UserSchema.pre("validate", function normalizeRoleFields(next) {
     // Move permissions out of roles/role if they are guide or coordinator

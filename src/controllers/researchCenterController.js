@@ -75,23 +75,25 @@ const create = asyncHandler(async (req, res) => {
         status 
     } = req.body;
     
-    if (!name || !code) {
-        return res.status(400).json({ message: "Name and code are required" });
+    if (!name) {
+        return res.status(400).json({ message: "Name is required" });
     }
+
+    let finalCode = code ? code.toUpperCase() : name.toUpperCase().replace(/[^A-Z0-9]/g, "").substring(0, 10) + Math.floor(100 + Math.random() * 900);
 
     // Check uniqueness
     const existingName = await ResearchCenter.findOne({ name });
     if (existingName) {
         return res.status(400).json({ message: "Research center name must be unique" });
     }
-    const existingCode = await ResearchCenter.findOne({ code: code.toUpperCase() });
+    const existingCode = await ResearchCenter.findOne({ code: finalCode });
     if (existingCode) {
-        return res.status(400).json({ message: "Research center code must be unique" });
+        finalCode = finalCode + Math.floor(10 + Math.random() * 90);
     }
 
     const newCenter = new ResearchCenter({
         name,
-        code: code.toUpperCase(),
+        code: finalCode,
         description,
         officeLocation,
         contactEmail,

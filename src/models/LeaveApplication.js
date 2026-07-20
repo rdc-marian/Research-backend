@@ -29,4 +29,8 @@ const LeaveApplicationSchema = new mongoose.Schema({
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     verifiedAt: Date,
 }, { timestamps: true });
+
+LeaveApplicationSchema.index({ scholar: 1, status: 1 });
+LeaveApplicationSchema.index({ scholar: 1, createdAt: -1 });
+
 module.exports = mongoose.model("LeaveApplication", LeaveApplicationSchema);

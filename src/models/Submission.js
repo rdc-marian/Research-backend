@@ -23,4 +23,9 @@ const SubmissionSchema = new mongoose.Schema({
     reviewNote: String,
     reviewedAt: Date,
 }, { timestamps: true });
+
+SubmissionSchema.index({ scholar: 1, status: 1 });
+SubmissionSchema.index({ scholar: 1, submittedAt: -1 });
+SubmissionSchema.index({ supervisor: 1 });
+
 module.exports = mongoose.model("Submission", SubmissionSchema);
