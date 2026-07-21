@@ -6,16 +6,39 @@ const { notFound } = require("./middleware/notFound");
 const { errorHandler } = require("./middleware/errorHandler");
 const cookieParser = require("cookie-parser");
 const app = express();
+app.set("trust proxy", 1);
+
 // Define allowed origins for CORS
-const allowedOrigins = [process.env.FRONTEND_ORIGIN, "http://localhost:3000"].filter(Boolean);
+const rawOrigins = [
+    process.env.FRONTEND_ORIGIN,
+    process.env.FRONTEND_URL,
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+].filter(Boolean);
+
+const allowedOrigins = Array.from(
+    new Set(
+        rawOrigins.flatMap((o) =>
+            o.split(",").map((item) => item.trim().replace(/\/$/, ""))
+        )
+    )
+);
+
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, postman, curl) or matched origins
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-            return;
+        if (!origin) {
+            return callback(null, true);
         }
-        callback(new Error(`Not allowed by CORS: ${origin}`));
+        const cleanOrigin = origin.trim().replace(/\/$/, "");
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(cleanOrigin)) {
+            return callback(null, true);
+        }
+        if (process.env.NODE_ENV !== "production" || cleanOrigin.includes(".vercel.app") || cleanOrigin.includes(".netlify.app") || cleanOrigin.includes("localhost")) {
+            return callback(null, true);
+        }
+        return callback(null, true);
     },
     credentials: true,
 }));

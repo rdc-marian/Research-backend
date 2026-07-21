@@ -42,10 +42,11 @@ const login = asyncHandler(async (req, res) => {
         requirePasswordChange: user.requirePasswordChange || false
     }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     // Set JWT as HTTP-only cookie
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction || process.env.COOKIE_SECURE === "true",
+        sameSite: process.env.COOKIE_SAME_SITE || (isProduction ? "none" : "lax"),
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
     // Return token and user details to frontend
@@ -68,10 +69,11 @@ const login = asyncHandler(async (req, res) => {
 });
 // User logout handler
 const logout = asyncHandler(async (req, res) => {
+    const isProduction = process.env.NODE_ENV === "production";
     res.clearCookie("token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction || process.env.COOKIE_SECURE === "true",
+        sameSite: process.env.COOKIE_SAME_SITE || (isProduction ? "none" : "lax"),
     });
     res.json({ message: "Logged out successfully" });
 });
@@ -131,8 +133,8 @@ const changePassword = asyncHandler(async (req, res) => {
     // Set the updated cookie
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction || process.env.COOKIE_SECURE === "true",
+        sameSite: process.env.COOKIE_SAME_SITE || (isProduction ? "none" : "lax"),
         maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
