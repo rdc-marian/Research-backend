@@ -89,13 +89,16 @@ const updateStatus = asyncHandler(async (req, res) => {
             updates.principalNote = note;
         }
     }
+    const updateQuery = {
+        $set: updates,
+    };
     if (reviewerId) {
-        updates.$addToSet = { reviewedBy: reviewerId };
+        updateQuery.$addToSet = { reviewedBy: reviewerId };
     }
-    const updatedIncentive = await Incentive.findByIdAndUpdate(id, updates, {
+    const updatedIncentive = await Incentive.findByIdAndUpdate(id, updateQuery, {
         new: true,
         runValidators: true,
-    }).populate("faculty", "name email department");
+    }).populate("faculty", "name email researchCenter avatar department uniqueId role roles");
     if (!updatedIncentive) {
         return res.status(404).json({ message: "Incentive application not found" });
     }
