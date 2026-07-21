@@ -35,9 +35,8 @@ const getAll = asyncHandler(async (req, res) => {
         const myScholars = await User.find({ guide: requester.userId }).select("_id");
         query.scholar = { $in: myScholars.map((s) => s._id) };
     } else if (isCoordinator) {
-        // Coordinator can view leave applications of scholars in their research center
-        const centerScholars = await User.find({ researchCenter: requester.researchCenter }).select("_id");
-        query.scholar = { $in: centerScholars.map((s) => s._id) };
+        // Research center coordinators do not manage scholar leaves
+        return res.status(403).json({ message: "Access denied: Research center coordinators do not manage scholar leaves." });
     } else if (isScholar) {
         // Scholar can ONLY view their own leave applications
         query.scholar = requester.userId;
@@ -284,11 +283,7 @@ const updateStatus = asyncHandler(async (req, res) => {
             return res.status(403).json({ message: "Access denied: You can only review leave requests from your own assigned scholars." });
         }
     } else if (status === "ApprovedByCoordinator") {
-        const centerId = leaveTarget.scholar?.researchCenter?.toString() || leaveTarget.scholar?.researchCenter?._id?.toString();
-        const reqCenter = requester.researchCenter?.toString() || requester.researchCenter?._id?.toString();
-        if (!isAdmin && (!isCoordinator || centerId !== reqCenter)) {
-            return res.status(403).json({ message: "Access denied: You can only approve leave requests from your own research center." });
-        }
+        return res.status(400).json({ message: "Research center leave approvals are disabled." });
     }
 
     const updates = {

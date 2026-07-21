@@ -10,4 +10,5 @@ router
     .get(incentiveController.getAll)
     .post(incentiveController.create);
 router.patch("/:id/status", incentiveController.updateStatus);
+router.delete("/:id", incentiveController.deleteIncentive);
 module.exports = router;

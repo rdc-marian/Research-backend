@@ -11,7 +11,7 @@ const getAll = asyncHandler(async (req, res) => {
     if (status)
         query.status = status;
     const incentives = await Incentive.find(query)
-        .populate("faculty", "name email department role roles")
+        .populate("faculty", "name email researchCenter avatar department uniqueId role roles")
         .sort({ createdAt: -1 });
     res.json({ items: incentives });
 });
@@ -101,8 +101,19 @@ const updateStatus = asyncHandler(async (req, res) => {
     }
     res.json({ item: updatedIncentive });
 });
+// Delete an incentive record
+const deleteIncentive = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const deletedIncentive = await Incentive.findByIdAndDelete(id);
+    if (!deletedIncentive) {
+        return res.status(404).json({ message: "Incentive application not found" });
+    }
+    res.json({ message: "Incentive application deleted successfully" });
+});
+
 module.exports = {
     getAll,
     create,
     updateStatus,
+    deleteIncentive,
 };
