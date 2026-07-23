@@ -24,8 +24,12 @@ const login = asyncHandler(async (req, res) => {
     }
     // Verify status is active
     if (user.status === "PendingApproval") {
+        const isScholar = user.role === "scholar" || (user.roles && user.roles.includes("scholar"));
+        const message = isScholar 
+            ? "Your account is pending approval from your selected Research Guide." 
+            : "Your account is pending administrator approval.";
         return res.status(403).json({
-            message: "Your account is pending approval from your Research Guide.",
+            message,
             pendingApproval: true
         });
     }

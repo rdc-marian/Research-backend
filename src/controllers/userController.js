@@ -132,15 +132,7 @@ const create = asyncHandler(async (req, res) => {
     }
 
     if (isFaculty) {
-        // Faculty must belong to exactly one Research Center
-        if (!finalResearchCenter) {
-            const defaultCenter = await ResearchCenter.findOne();
-            if (defaultCenter) {
-                finalResearchCenter = defaultCenter._id;
-            } else {
-                return res.status(400).json({ message: "Research center is required for faculty, but none exist in the system" });
-            }
-        }
+        // Research Center selection is optional for faculty during signup/creation
     }
 
     // Hash password (generate temporary password if not provided)
@@ -259,12 +251,7 @@ const update = asyncHandler(async (req, res) => {
     }
 
     if (isFaculty) {
-        const finalResearchCenter = updates.researchCenter !== undefined ? updates.researchCenter : targetUser.researchCenter;
-        if (!finalResearchCenter) {
-            return res.status(400).json({ message: "Research center is required for faculty" });
-        }
-
-        // If this faculty is a research guide, update all their scholars' researchCenter to match
+        // If this faculty is a research guide and researchCenter is updated, update all their scholars' researchCenter to match
         const isGuideUser = targetUser.permissions?.includes("research_guide") || targetUser.roles?.includes("research_guide") || currentRoles.includes("research_guide");
         if (isGuideUser && updates.researchCenter) {
             await User.updateMany(
