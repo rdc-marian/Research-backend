@@ -1,9 +1,8 @@
 const express = require("express");
 const ResearchGuidance = require("../models/ResearchGuidance");
 const User = require("../models/User");
-const { upload } = require("../middleware/upload");
-const { isS3Configured } = require("../config/s3");
-const { uploadBuffer } = require("../utils/s3Upload");
+const { memoryUpload } = require("../middleware/memoryUpload");
+const { isS3Configured, uploadBuffer } = require("../utils/googleDriveUpload");
 const { asyncHandler } = require("../utils/asyncHandler");
 
 const router = express.Router();
@@ -39,14 +38,14 @@ router.get(
 
 router.post(
   "/",
-  upload.single("file"),
+  memoryUpload.single("file"),
   asyncHandler(async (req, res) => {
     const data = { ...req.body };
 
     let fileData;
     if (req.file) {
       if (!isS3Configured()) {
-        res.status(400).json({ message: "AWS S3 is not configured" });
+        res.status(400).json({ message: "Google Drive is not configured" });
         return;
       }
       const result = await uploadBuffer(req.file.buffer, {
@@ -91,13 +90,13 @@ router.get(
 
 router.patch(
   "/:id",
-  upload.single("file"),
+  memoryUpload.single("file"),
   asyncHandler(async (req, res) => {
     const update = { ...req.body };
 
     if (req.file) {
       if (!isS3Configured()) {
-        res.status(400).json({ message: "AWS S3 is not configured" });
+        res.status(400).json({ message: "Google Drive is not configured" });
         return;
       }
       const result = await uploadBuffer(req.file.buffer, {

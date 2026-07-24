@@ -6,6 +6,7 @@ console.log("Initializing Research Marian Portal API Server...");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const { app } = require("./app");
 const { connectDB } = require("./config/db");
+const { configureGoogleDrive } = require("./config/googleDrive");
 // Retrieve port from env or default to 5000
 const PORT = Number(process.env.PORT) || 5000;
 // Setup uncaught error logging
@@ -20,6 +21,8 @@ const startServer = async () => {
     try {
         console.log("Connecting to Database...");
         await connectDB();
+        console.log("Initializing Google Drive Client...");
+        await configureGoogleDrive();
         console.log("Starting HTTP server...");
         app.listen(PORT, () => {
             console.log(`API Server is listening on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`);

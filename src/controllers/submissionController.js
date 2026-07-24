@@ -3,6 +3,7 @@
 const Submission = require("../models/Submission");
 const User = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
+const { uploadBuffer } = require("../utils/googleDriveUpload");
 // Helper to parse dates
 const parseDate = (value) => {
     if (!value)
@@ -106,9 +107,14 @@ const create = asyncHandler(async (req, res) => {
     }
     let fileData;
     if (req.file) {
+        const result = await uploadBuffer(req.file.buffer, {
+            folder: "submissions",
+            originalName: req.file.originalname,
+            contentType: req.file.mimetype,
+        });
         fileData = {
-            url: `/api/uploads/${req.file.filename}`,
-            publicId: req.file.filename,
+            url: result.url,
+            publicId: result.key,
             originalName: req.file.originalname,
             mimeType: req.file.mimetype,
             size: req.file.size,
@@ -149,9 +155,14 @@ const update = asyncHandler(async (req, res) => {
         updates.supervisor = supervisorId || undefined;
     }
     if (req.file) {
+        const result = await uploadBuffer(req.file.buffer, {
+            folder: "submissions",
+            originalName: req.file.originalname,
+            contentType: req.file.mimetype,
+        });
         updates.file = {
-            url: `/api/uploads/${req.file.filename}`,
-            publicId: req.file.filename,
+            url: result.url,
+            publicId: result.key,
             originalName: req.file.originalname,
             mimeType: req.file.mimetype,
             size: req.file.size,

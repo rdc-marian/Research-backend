@@ -30,6 +30,7 @@ const settingsRoutes = require("./settings");
 const uploadRoutes = require("./uploads");
 const healthRoutes = require("./health");
 const researchGuidesRoutes = require("./researchGuides");
+const documentRoutes = require("./documents");
 const submissionController = require("../controllers/submissionController");
 const authController = require("../controllers/authController");
 const userController = require("../controllers/userController");
@@ -139,6 +140,7 @@ router.use("/incentives", incentiveRoutes);
 router.use("/reports", reportRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/uploads", uploadRoutes);
+router.use("/documents", documentRoutes);
 
 // Directly map submission status checks for approvals report
 router.get("/approvals", submissionController.getAll);
